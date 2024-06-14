@@ -1,7 +1,8 @@
 use numpy::ndarray::{ArrayD,  ArrayViewD};
 use numpy::{
     IntoPyArray,  PyArrayDyn,
-    PyReadonlyArrayDyn,
+    PyReadonlyArrayDyn, PyReadonlyArray2, PyReadonlyArray1, PyReadwriteArray2,
+    PyReadwriteArray1
 };
 use pyo3::{
     pymodule,
@@ -28,17 +29,35 @@ fn sklearn_rust_engine<'py>(m: &Bound<'py, PyModule>) -> PyResult<()> {
         let x = x.as_array();
         let y = y.as_array();
         let z = axpy_(a, x, y);
-        z.into_pyarray_bound(py)
+        IntoPyArray::into_pyarray_bound(z, py)
     }
-    #[pyfn(m)]
-    #[pyo3(name = "truc")]
-    fn lloyd_step<'py>(
-        py: Python<'py>,
-        a: f64,
-        x: PyReadonlyArrayDyn<'py, f64>,
-        y: PyReadonlyArrayDyn<'py, f64>,
-    ) -> Bound<'py, PyArrayDyn<f64>> {
-        todo()
+
+
+//     def lloyd_iter_chunked_dense(
+//             const floating[:, ::1] X,            # IN
+//             const floating[::1] sample_weight,   # IN
+//             const floating[:, ::1] centers_old,  # IN
+//             floating[:, ::1] centers_new,        # OUT
+//             floating[::1] weight_in_clusters,    # OUT
+//             int[::1] labels,                     # OUT
+//             floating[::1] center_shift,          # OUT
+//             int n_threads,
+//             bint update_centers=True):
+
+     #[pyfn(m)]
+     #[pyo3(name = "truc")]
+     fn lloyd_iter_chunked_dense(
+         X: PyReadonlyArray2<f64>,
+         sample_weight: PyReadonlyArray1<f64>,
+         centers_old: PyReadonlyArray2<f64>,
+         centers_new: PyReadwriteArray2<f64>,
+         weight_in_clusters: PyReadwriteArray1<f64>,
+         labels: PyReadwriteArray1<i64>,
+         center_shift: PyReadwriteArray1<f64>,
+         n_threads: i64,
+         update_centers: bool
+     ) -> PyResult<()> {
+         Ok(())
     }
 
     /// Formats the sum of two numbers as string.
