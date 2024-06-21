@@ -59,16 +59,30 @@ fn sklearn_rust_engine<'py>(m: &Bound<'py, PyModule>) -> PyResult<()> {
          update_centers: bool
      ) -> PyResult<()> {
 
-        let mut first_item = centers_new.get_mut([0,0]).unwrap();
+        let first_item = centers_new.get_mut([0,0]).unwrap();
         *first_item = 100.;
 
          centers_new
             .as_slice_mut()
             .unwrap()
             .iter_mut()
-            .for_each(|mut x| {*x = *x + 1.;});
+            .for_each(|x| {*x = *x + 1.;});
 
-         let mut centers_new_slice = centers_new.as_slice_mut().unwrap();
+         centers_new
+            .as_slice_mut()
+            .unwrap()
+            .iter_mut()
+            .map(|x| {*x = *x + 1.;})
+            .count();
+
+         let _ = centers_new
+            .as_slice_mut()
+            .unwrap()
+            .iter_mut()
+            .map(|x| {*x = *x + 1.;})
+            .collect::<()>();
+
+         let centers_new_slice = centers_new.as_slice_mut().unwrap();
          for item in centers_new_slice {
              *item = *item + 1. ;
          }
