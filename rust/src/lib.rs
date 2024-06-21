@@ -45,18 +45,21 @@ fn sklearn_rust_engine<'py>(m: &Bound<'py, PyModule>) -> PyResult<()> {
 //             bint update_centers=True):
 
      #[pyfn(m)]
-     #[pyo3(name = "truc")]
+     // #[pyo3(name = "truc")]
      fn lloyd_iter_chunked_dense(
          X: PyReadonlyArray2<f64>,
          sample_weight: PyReadonlyArray1<f64>,
          centers_old: PyReadonlyArray2<f64>,
-         centers_new: PyReadwriteArray2<f64>,
-         weight_in_clusters: PyReadwriteArray1<f64>,
-         labels: PyReadwriteArray1<i64>,
-         center_shift: PyReadwriteArray1<f64>,
+         mut centers_new: PyReadwriteArray2<f64>,
+         mut weight_in_clusters: PyReadwriteArray1<f64>,
+         mut labels: PyReadwriteArray1<i64>,
+         mut center_shift: PyReadwriteArray1<f64>,
          n_threads: i64,
          update_centers: bool
      ) -> PyResult<()> {
+
+        let mut first_item = centers_new.get_mut([0,0]).unwrap();
+        *first_item = 100.;
          Ok(())
     }
 
