@@ -2,7 +2,8 @@ use numpy::ndarray::{ArrayD,  ArrayViewD};
 use numpy::{
     IntoPyArray,  PyArrayDyn,
     PyReadonlyArrayDyn, PyReadonlyArray2, PyReadonlyArray1, PyReadwriteArray2,
-    PyReadwriteArray1
+    PyReadwriteArray1,
+    NotContiguousError
 };
 use pyo3::{
     pymodule,
@@ -60,6 +61,18 @@ fn sklearn_rust_engine<'py>(m: &Bound<'py, PyModule>) -> PyResult<()> {
 
         let mut first_item = centers_new.get_mut([0,0]).unwrap();
         *first_item = 100.;
+
+         centers_new
+            .as_slice_mut()
+            .unwrap()
+            .iter_mut()
+            .for_each(|mut x| {*x = *x + 1.;});
+
+         let mut centers_new_slice = centers_new.as_slice_mut().unwrap();
+         for item in centers_new_slice {
+             *item = *item + 1. ;
+         }
+
          Ok(())
     }
 
