@@ -121,6 +121,13 @@ fn sklearn_rust_engine<'py>(m: &Bound<'py, PyModule>) -> PyResult<()> {
     Ok(())
 }
 
+fn distance(x: &Vec<f64>, y: &Vec<f64>) -> f64 {
+    x.iter()
+        .zip(y.iter())
+        .map(|(x_, y_)| (x_ - y_).powf(2.0))
+        .sum()
+}
+
 #[derive(Debug, PartialEq)]
 struct KMeansResult {
     cluster_centroids: Vec<Vec<f64>>,
@@ -136,6 +143,20 @@ fn kmeans(x: Vec<Vec<f64>>, n_clusters: usize) -> KMeansResult {
         cluster_centroids.push(x[i].clone())
     }
 
+    // Expectation step
+
+    let mut closest_centroids_idx: Vec<u64>;
+    let mut closest_centroids_distance: Vec<f64>;
+
+    for point in x {
+        let mut closest_centroid_idx: u64 = 0;
+        let mut closest_centroid_distance: f64 = f64::INFINITY;
+
+        for (idx, centroid) in cluster_centroids.iter().enumerate() {
+            distance(&point, &centroid);
+        }
+    }
+
     KMeansResult {
         cluster_centroids: vec![],
         cluster_assignments: vec![],
@@ -145,6 +166,14 @@ fn kmeans(x: Vec<Vec<f64>>, n_clusters: usize) -> KMeansResult {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_distance() {
+        let x = vec![0.0, 0.0];
+        let y = vec![1.0, 0.0];
+
+        assert_eq!(distance(&x, &y), 1.0);
+    }
 
     #[test]
     fn it_works() {
