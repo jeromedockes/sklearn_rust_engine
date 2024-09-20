@@ -128,7 +128,14 @@ struct KMeansResult {
     cluster_assignments: Vec<i64>,
 }
 
-fn kmeans(x: Vec<Vec<f64>>, n_clusters: i64) -> KMeansResult {
+fn kmeans(x: Vec<Vec<f64>>, n_clusters: usize) -> KMeansResult {
+    // Initialize a vec of centroids taken randomly from the dataset
+    // NB: assumption is made that our dataset has at least n_clusters row.
+    let mut cluster_centroids: Vec<Vec<f64>> = vec![];
+    for i in 0..n_clusters {
+        cluster_centroids.push(x[i].clone())
+    }
+
     KMeansResult {
         cluster_centroids: vec![],
         cluster_assignments: vec![],
