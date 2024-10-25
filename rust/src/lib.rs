@@ -126,13 +126,13 @@ fn distance(x: &Vec<f64>, y: &Vec<f64>) -> f64 {
 }
 
 #[derive(Debug, PartialEq)]
-struct KMeansResult {
+pub struct KMeansResult {
     cluster_centroids: Vec<Vec<f64>>,
     // For each point in x, which cluster it is assigned to
-    cluster_assignments: Vec<i64>,
+    cluster_assignments: Vec<usize>,
 }
 
-fn kmeans(x: Vec<Vec<f64>>, n_clusters: usize) -> KMeansResult {
+pub fn kmeans(x: Vec<Vec<f64>>, n_clusters: usize, n_iter: usize) -> KMeansResult {
     // Initialize a vec of centroids taken randomly from the dataset
     // NB: assumption is made that our dataset has at least n_clusters row.
     let mut cluster_centroids: Vec<Vec<f64>> = vec![];
@@ -140,8 +140,46 @@ fn kmeans(x: Vec<Vec<f64>>, n_clusters: usize) -> KMeansResult {
         cluster_centroids.push(x[i].clone())
     }
 
-    // Expectation step
+    for _ in 0..n_iter {
+        // Expectation step
 
+        let mut closest_centroids_idx: Vec<usize> = vec![0; x.len()];
+        let mut closest_centroids_distance: Vec<f64> = vec![0.; x.len()];
+        let mut centroids_total_weight: Vec<f64> = vec![0.; n_clusters];
+
+        for (point_idx, point) in x.iter().enumerate() {
+            let mut closest_centroid_idx: usize = 0;
+            let mut closest_centroid_distance: f64 = f64::INFINITY;
+
+            for (centroid_idx, centroid) in cluster_centroids.iter().enumerate() {
+                let distance_point_to_centroid = distance(&point, &centroid);
+                if distance_point_to_centroid < closest_centroid_distance {
+                    closest_centroid_idx = centroid_idx;
+                    closest_centroid_distance = distance_point_to_centroid;
+                }
+            }
+
+            closest_centroids_idx[point_idx] = closest_centroid_idx;
+            closest_centroids_distance[point_idx] = closest_centroid_distance;
+            centroids_total_weight[closest_centroid_idx] += 1.;
+        }
+
+        // Minimization step
+
+        cluster_centroids = vec![vec![0.; x[0].len()]; n_clusters];
+
+        for (point_idx, point) in x.iter().enumerate() {
+            point
+                .iter()
+                .zip(cluster_centroids[closest_centroids_idx[point_idx]].iter_mut())
+                .for_each(|(x, y)| {
+                    *y += x / (centroids_total_weight[closest_centroids_idx[point_idx]])
+                })
+        }
+    }
+
+    // Final step to get closest_centroids_idx
+    // TODO: Refactor expectation
     let mut closest_centroids_idx: Vec<usize> = vec![0; x.len()];
     let mut closest_centroids_distance: Vec<f64> = vec![0.; x.len()];
     let mut centroids_total_weight: Vec<f64> = vec![0.; n_clusters];
@@ -163,18 +201,9 @@ fn kmeans(x: Vec<Vec<f64>>, n_clusters: usize) -> KMeansResult {
         centroids_total_weight[closest_centroid_idx] += 1.;
     }
 
-    cluster_centroids = vec![vec![0.; x[0].len()]; n_clusters];
-
-    for (point_idx, point) in x.iter().enumerate() {
-        point
-            .iter()
-            .zip(cluster_centroids[closest_centroids_idx[point_idx]].iter_mut())
-            .for_each(|(x, y)| *y += x / (centroids_total_weight[closest_centroids_idx[point_idx]]))
-    }
-
     KMeansResult {
-        cluster_centroids: vec![],
-        cluster_assignments: vec![],
+        cluster_centroids,
+        cluster_assignments: closest_centroids_idx,
     }
 }
 
@@ -192,20 +221,37 @@ mod tests {
 
     #[test]
     fn it_works() {
-        // let x = vec![vec![0.0, 0.0], vec![1.0, 1.0]];
         let x = vec![
             vec![0.0, 0.0],
-            vec![0.5, 0.0],
-            vec![0.5, 1.0],
-            vec![1.0, 1.0],
+            vec![0.0, 100.0],
+            vec![1.0, 0.0],
+            vec![1.0, 100.0],
         ];
-        let result = kmeans(x, 2);
+        let result = kmeans(x, 2, 100);
         assert_eq!(
-            result,
             KMeansResult {
-                cluster_centroids: vec![vec![148.], vec![2.]],
-                cluster_assignments: vec![],
-            }
+                cluster_centroids: vec![vec![0.5, 0.], vec![0.5, 100.]],
+                cluster_assignments: vec![0, 1, 0, 1],
+            },
+            result
+        );
+    }
+
+    #[test]
+    fn it_works_again() {
+        let x = vec![
+            vec![0.0, 0.0],
+            vec![1.0, 0.0],
+            vec![0.0, 100.0],
+            vec![1.0, 100.0],
+        ];
+        let result = kmeans(x, 2, 100);
+        assert_eq!(
+            KMeansResult {
+                cluster_centroids: vec![vec![0., 50.], vec![1., 50.]],
+                cluster_assignments: vec![0, 1, 0, 1],
+            },
+            result
         );
     }
 }
