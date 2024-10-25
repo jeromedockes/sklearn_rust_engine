@@ -7,6 +7,7 @@ use numpy::{
 use pyo3::{pymodule, types::PyModule, Bound, PyResult, Python};
 use std::iter::Enumerate;
 use std::ops::{Mul, Sub};
+use ndarray::{Array1, Array2, s};
 
 #[pymodule]
 fn sklearn_rust_engine<'py>(m: &Bound<'py, PyModule>) -> PyResult<()> {
@@ -125,12 +126,34 @@ fn distance(x: &Vec<f64>, y: &Vec<f64>) -> f64 {
     x.iter().zip(y.iter()).map(|(x, y)| (x - y).powf(2.0)).sum()
 }
 
+
+#[derive(Debug, PartialEq)]
+pub struct KMeansArrayResult {
+    cluster_centroids: Array2<f64>,
+    // For each point in x, which cluster it is assigned to
+    cluster_assignments: Array1<usize>,
+}
+
+
+pub fn kmeans_with_ndarray(x: &Array2<f64>, n_clusters: usize, n_iter: usize) -> KMeansArrayResult {
+    // Initialize a vec of centroids taken randomly from the dataset
+    // NB: assumption is made that our dataset has at least n_clusters row.
+    let mut cluster_centroids = Array2::from(x.slice(s![0..n_clusters, ..]).to_owned());
+
+    KMeansArrayResult {
+        cluster_centroids: TODO,
+        cluster_assignments: closest_centroids_idx,
+    }
+}
+
 #[derive(Debug, PartialEq)]
 pub struct KMeansResult {
     cluster_centroids: Vec<Vec<f64>>,
     // For each point in x, which cluster it is assigned to
     cluster_assignments: Vec<usize>,
 }
+
+
 
 pub fn kmeans(x: Vec<Vec<f64>>, n_clusters: usize, n_iter: usize) -> KMeansResult {
     // Initialize a vec of centroids taken randomly from the dataset
