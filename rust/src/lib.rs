@@ -122,10 +122,7 @@ fn sklearn_rust_engine<'py>(m: &Bound<'py, PyModule>) -> PyResult<()> {
 }
 
 fn distance(x: &Vec<f64>, y: &Vec<f64>) -> f64 {
-    x.iter()
-        .zip(y.iter())
-        .map(|(x_, y_)| (x_ - y_).powf(2.0))
-        .sum()
+    x.iter().zip(y.iter()).map(|(x, y)| (x - y).powf(2.0)).sum()
 }
 
 #[derive(Debug, PartialEq)]
@@ -145,16 +142,34 @@ fn kmeans(x: Vec<Vec<f64>>, n_clusters: usize) -> KMeansResult {
 
     // Expectation step
 
-    let mut closest_centroids_idx: Vec<u64>;
-    let mut closest_centroids_distance: Vec<f64>;
+    let mut closest_centroids_idx: Vec<usize> = vec![0; x.len()];
+    let mut closest_centroids_distance: Vec<f64> = vec![0.; x.len()];
+    let mut centroids_total_weight: Vec<f64> = vec![0.; n_clusters];
 
-    for point in x {
-        let mut closest_centroid_idx: u64 = 0;
+    for (point_idx, point) in x.iter().enumerate() {
+        let mut closest_centroid_idx: usize = 0;
         let mut closest_centroid_distance: f64 = f64::INFINITY;
 
-        for (idx, centroid) in cluster_centroids.iter().enumerate() {
-            distance(&point, &centroid);
+        for (centroid_idx, centroid) in cluster_centroids.iter().enumerate() {
+            let distance_point_to_centroid = distance(&point, &centroid);
+            if distance_point_to_centroid < closest_centroid_distance {
+                closest_centroid_idx = centroid_idx;
+                closest_centroid_distance = distance_point_to_centroid;
+            }
         }
+
+        closest_centroids_idx[point_idx] = closest_centroid_idx;
+        closest_centroids_distance[point_idx] = closest_centroid_distance;
+        centroids_total_weight[closest_centroid_idx] += 1.;
+    }
+
+    cluster_centroids = vec![vec![0.; x[0].len()]; n_clusters];
+
+    for (point_idx, point) in x.iter().enumerate() {
+        point
+            .iter()
+            .zip(cluster_centroids[closest_centroids_idx[point_idx]].iter_mut())
+            .for_each(|(x, y)| *y += x / (centroids_total_weight[closest_centroids_idx[point_idx]]))
     }
 
     KMeansResult {
